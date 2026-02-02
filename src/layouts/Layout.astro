@@ -14,6 +14,7 @@ export interface Props {
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
+    <meta name="color-scheme" content="light only" />
     <meta
       name="description"
       content="Predict-A-Pool is a web app for friends and family to predict the outcomes of their favorite pools."
@@ -35,51 +36,47 @@ export interface Props {
 
     const switchTheme = document.querySelector(
       "[data-switch-theme]"
-    ) as HTMLButtonElement;
-    switchTheme.addEventListener("click", (e) => {
-      e.preventDefault();
-      changeThemeManually();
-    });
+    ) as HTMLButtonElement | null;
+    if (switchTheme) {
+      switchTheme.addEventListener("click", (e) => {
+        e.preventDefault();
+        changeThemeManually();
+      });
+    }
 
     function changeThemeManually() {
-      const localAppTheme = localStorage.getItem("theme");
-      // Whenever the user explicitly chooses dark mode, previously it was light mode
-      if (localAppTheme === "light") {
-        changeThemeToDark();
-      }
-      // Whenever the user explicitly chooses light mode, previously it was dark mode
-      if (localAppTheme === "dark") {
+      const isDark = document.documentElement.classList.contains("dark");
+      if (isDark) {
         changeThemeToLight();
-      }
-      if (!localAppTheme) {
-        console.log("previously it was not set");
-        // Whenever the user explicitly chooses to respect the OS preference
-        detectSystemTheme(true);
+      } else {
+        changeThemeToDark();
       }
     }
 
-    function detectSystemTheme(manual = false) {
-      if (
-        localStorage.getItem("theme") === "dark" ||
-        (!("theme" in localStorage) &&
-          window.matchMedia("(prefers-color-scheme: dark)").matches)
-      ) {
-        document.documentElement.classList.add("dark");
-        if (manual) localStorage.setItem("theme", "dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-        if (manual) localStorage.setItem("theme", "light");
-      }
+    function applyTheme(isDark: boolean) {
+      document.documentElement.classList.toggle("dark", isDark);
+      document.body.classList.toggle("dark", isDark);
+    }
+
+    function detectSystemTheme() {
+      const localAppTheme = localStorage.getItem("theme");
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
+      const shouldUseDark = localAppTheme
+        ? localAppTheme === "dark"
+        : prefersDark;
+      applyTheme(shouldUseDark);
     }
 
     function changeThemeToDark() {
       localStorage.setItem("theme", "dark");
-      document.documentElement.classList.add("dark");
+      applyTheme(true);
     }
 
     function changeThemeToLight() {
       localStorage.setItem("theme", "light");
-      document.documentElement.classList.remove("dark");
+      applyTheme(false);
     }
   </script>
   <script>
